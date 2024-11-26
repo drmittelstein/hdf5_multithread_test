@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <queue>
 
+#include <mutex>
 
 class H5FileWriter {
 
@@ -42,6 +43,10 @@ class H5FileWriter {
         hid_t lcpl; // Link creation property list
 
         std::vector<hid_t> open_datasets;
+
+    private:
+        static std::mutex mtx;
+
         
 };
 

@@ -1,7 +1,12 @@
 
 #include "h5.h"
 
+// Define the static mutex
+std::mutex H5FileWriter::mtx;
+
 H5FileWriter::H5FileWriter(std::string& directory, std::string& file_prefix){
+    std::lock_guard<std::mutex> lock(mtx);
+
     // Create property lists
     fcpl = H5Pcreate(H5P_FILE_CREATE);
     fapl = H5Pcreate(H5P_FILE_ACCESS);
@@ -39,6 +44,8 @@ H5FileWriter::H5FileWriter(std::string& directory, std::string& file_prefix){
 }
 
 H5FileWriter::~H5FileWriter() {
+    std::lock_guard<std::mutex> lock(mtx);
+
     // Close datasets
     for (auto dataset : open_datasets) {
         H5Dclose(dataset);
@@ -53,6 +60,8 @@ H5FileWriter::~H5FileWriter() {
 }
 
 void H5FileWriter::writeScalarToDataset(const std::string& name, double value) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     hsize_t dims[1] = {1};
     hid_t dataspace = H5Screate_simple(1, dims, nullptr);
     if (dataspace < 0) throw std::runtime_error("Failed to create dataspace for " + name);
@@ -66,12 +75,16 @@ void H5FileWriter::writeScalarToDataset(const std::string& name, double value) {
 };
 
 void H5FileWriter::writeDictionaryOfScalarsToDataset(const std::string& name, const std::map<std::string, double>& values) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     for (auto& value : values) {
         writeScalarToDataset(name + "_" + value.first, value.second);
     }
 };
 
 void H5FileWriter::writeMatrixAxisToDataset(const std::string& name, const std::vector<double>& axis) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     hsize_t dims[1] = {axis.size()};
     hid_t dataspace = H5Screate_simple(1, dims, nullptr);
     if (dataspace < 0) throw std::runtime_error("Failed to create dataspace for " + name);
@@ -85,6 +98,8 @@ void H5FileWriter::writeMatrixAxisToDataset(const std::string& name, const std::
 };
 
 hid_t H5FileWriter::generate4DMatrix(const std::string& name, size_t N, size_t M, size_t O, size_t P) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     // Define the data space for the dataset
     hsize_t dims[4] = {N, M, O, P};
     hid_t dataspace = H5Screate_simple(4, dims, nullptr);
@@ -114,6 +129,8 @@ hid_t H5FileWriter::generate4DMatrix(const std::string& name, size_t N, size_t M
 }
 
 hid_t H5FileWriter::generate5DMatrix(const std::string& name, size_t N, size_t M, size_t O, size_t P, size_t Q) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     // Define the data space for the dataset
     hsize_t dims[5] = {N, M, O, P, Q};
     hid_t dataspace = H5Screate_simple(5, dims, nullptr);
@@ -143,6 +160,8 @@ hid_t H5FileWriter::generate5DMatrix(const std::string& name, size_t N, size_t M
 }
 
 void H5FileWriter::writeTo4DMatrix(hid_t dataset, double value, int i, int j, int k, int l) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     hsize_t offset[4] = {static_cast<hsize_t>(i), static_cast<hsize_t>(j), static_cast<hsize_t>(k), static_cast<hsize_t>(l)};
     hsize_t count[4] = {1, 1, 1, 1};
 
@@ -180,6 +199,8 @@ void H5FileWriter::writeTo4DMatrix(hid_t dataset, double value, int i, int j, in
 }
 
 void H5FileWriter::writeTo5DMatrix(hid_t dataset, double value, int i, int j, int k, int l, int m) {
+    std::lock_guard<std::mutex> lock(mtx);
+
     hsize_t offset[5] = {static_cast<hsize_t>(i), static_cast<hsize_t>(j), static_cast<hsize_t>(k), static_cast<hsize_t>(l), static_cast<hsize_t>(m)};
     hsize_t count[5] = {1, 1, 1, 1, 1};
 
@@ -218,6 +239,7 @@ void H5FileWriter::writeTo5DMatrix(hid_t dataset, double value, int i, int j, in
 
 
 H5FileReader::H5FileReader(const std::string& file_path) {
+    
     this->file_path = file_path;
     file = H5Fopen(file_path.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     if (file < 0) {
