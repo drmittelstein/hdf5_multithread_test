@@ -31,6 +31,16 @@ void multiThreadedWrite(int threads){
 }
 
 int main(void){
+
+    // If I build with:
+    // set(HDF5_BUILD_FROM_SOURCE ON CACHE BOOL "" FORCE)
+    // then, I get the following error at initialization:
+    // The program '[19848] hdf5_multithread_test.exe' has exited with code -1073741515 (0xc0000135).
+
+    // If I build with:
+    // set(HDF5_BUILD_FROM_SOURCE OFF CACHE BOOL "" FORCE)
+    // then the following lines run without error:
+
     singleThreadedWrite();
     std::cout << "Single threaded write complete" << std::endl;
 
@@ -41,7 +51,7 @@ int main(void){
     std::cout << "Single separate thread write complete" << std::endl;
 
     multiThreadedWrite(4);
-    // Error occurs here:
+    // But, an error occurs here:
     // Exception thrown at 0x00007FFD70116A44 (hdf5.dll) in hdf5_multithread_test.exe: 0xC0000005: Access violation reading location 0xFFFFFFFFFFFFFFFF.
     // Exception thrown at 0x00007FFD7011F9B7 (hdf5.dll) in hdf5_multithread_test.exe: 0xC0000005: Access violation reading location 0x0000000000000000.
     // HDF5-DIAG: Error detected in HDF5 (1.14.5):
