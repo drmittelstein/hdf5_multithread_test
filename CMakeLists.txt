@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Select HDF5 build strategy
-set(HDF5_BUILD_FROM_SOURCE OFF CACHE BOOL "" FORCE)
+option(HDF5_BUILD_FROM_SOURCE "Build HDF5 with FetchContent" OFF)
 
 # HDF5 configuration flags
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -30,10 +30,8 @@ if (HDF5_BUILD_FROM_SOURCE)
     set (HDF5_INCLUDE_DIRS ${hdf5_BINARY_DIR}/src)
 else()
     # Load pre-installed HDF5 package
-    set (LIB_TYPE SHARED) # STATIC or SHARED
-    string(TOLOWER ${LIB_TYPE} SEARCH_TYPE)
-    find_package(HDF5 NAMES hdf5 COMPONENTS C ${SEARCH_TYPE})
-    set (LINK_LIBS ${LINK_LIBS} ${HDF5_C_${LIB_TYPE}_LIBRARY})
+    find_package(HDF5 REQUIRED COMPONENTS C)
+    set (LINK_LIBS ${LINK_LIBS} ${HDF5_LIBRARIES})
 endif()
 
 # HDF5 package information
